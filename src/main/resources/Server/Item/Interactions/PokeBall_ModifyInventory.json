@@ -1,0 +1,8 @@
+{
+  "Type": "ModifyInventory",
+  "ItemToRemove": {
+    "Quantity": 1,
+    "Id": "PokeBall_Empty"
+  },
+  "AdjustHeldItemDurability": 0
+}

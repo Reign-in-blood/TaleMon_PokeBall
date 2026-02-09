@@ -1,0 +1,8 @@
+{
+  "Type": "SpawnNPC",
+  "EntityId": "HorseMount",
+  "SpawnYawOffset": 5,
+  "SpawnOffset": {
+    "Y": 0.5
+  }
+}

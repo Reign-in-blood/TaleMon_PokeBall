@@ -1,0 +1,9 @@
+{
+  "Type": "ModifyInventory",
+  "AdjustHeldItemDurability": 1,
+  "BrokenItem": "PokeBall_Full",
+  "ItemToRemove": {
+    "Id": "PokeBall_Full"
+  },
+  "NotifyOnBreak": true
+}

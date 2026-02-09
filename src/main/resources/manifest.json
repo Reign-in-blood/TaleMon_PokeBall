@@ -1,0 +1,22 @@
+{
+    "Group": "TaleMon",
+    "Name": "TaleMon_PokeBall",
+    "Version": "0.1.1",
+    "Description": "",
+    "Authors": [
+        {
+            "Name": "ReignInBlood"
+        }
+    ],
+    "Website": "https://www.curseforge.com/members/reigninblood/projects",
+    "ServerVersion": "*",
+    "Dependencies": {
+        
+    },
+    "OptionalDependencies": {
+        
+    },
+    "DisabledByDefault": false,
+    "IncludesAssetPack": true,
+    "Main": "com.reigninblood.TaleMon_PokeBall.PokeBall_Plugin"
+}

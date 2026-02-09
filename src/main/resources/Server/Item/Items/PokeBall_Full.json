@@ -1,0 +1,34 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.PokeBall_Full.name",
+    "Description": ""
+  },
+  "Model": "Items/PokeBall/Poke_Ball.blockymodel",
+  "Texture": "Items/PokeBall/Poke_Ball.png",
+  "Icon": "Icons/ItemsGenerated/PokeBall_Capture_Crate_Full.png",
+  "PlayerAnimationsId": "Block",
+  "MaxStack": 1,
+  "ItemLevel": 18,
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "talemon:pokeball_release"
+        }
+      ]
+    }
+  },
+  "IconProperties": {
+    "Scale": 0.58823,
+    "Rotation": [
+      22.5,
+      45.0,
+      22.5
+    ],
+    "Translation": [
+      0.0,
+      -13.5
+    ]
+  },
+  "MaxDurability": 1
+}

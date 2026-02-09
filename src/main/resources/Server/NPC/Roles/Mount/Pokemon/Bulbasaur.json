@@ -1,0 +1,24 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Mount_Neutral",
+  "Modify": {
+    "Appearance": "Bulbasaur",
+    "AttitudeGroup": "PredatorsBig",
+    "MaxHealth": 50,
+    "MaxSpeed": 10,
+    "IsMountable": false,
+    "MountAnchorX": 0,
+    "MountAnchorY": 1.3,
+    "MountAnchorZ": 0,
+    "IsMemory": false,
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "Bulbasaur",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

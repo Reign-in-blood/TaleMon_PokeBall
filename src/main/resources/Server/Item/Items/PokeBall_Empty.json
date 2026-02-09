@@ -1,0 +1,63 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.PokeBall_Empty.name",
+    "Description": "server.items.PokeBall_Empty.description"
+  },
+  "Model": "Items/PokeBall/Poke_Ball.blockymodel",
+  "Texture": "Items/PokeBall/Poke_Ball.png",
+  "Icon": "Icons/ItemsGenerated/PokeBall_Capture_Crate.png",
+  "PlayerAnimationsId": "Block",
+  "MaxStack": 100,
+  "ItemLevel": 18,
+  "Recipe": {
+    "TimeSeconds": 2,
+    "Input": [
+      {
+        "Quantity": 4,
+        "ResourceTypeId": "Wood_All"
+      },
+      {
+        "ItemId": "Ingredient_Life_Essence",
+        "Quantity": 50
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Type": "Crafting",
+        "Categories": [
+          "Farming"
+        ],
+        "Id": "Farmingbench"
+      }
+    ]
+  },
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "Effects": {
+            "ItemAnimationId": "Interact"
+          },
+          "RunTime": 0.05,
+          "Next": {
+            "Type": "talemon:pokeball_capture",
+            "Next": "PokeBall_ModifyInventory"
+          }
+        }
+      ]
+    }
+  },
+  "IconProperties": {
+    "Scale": 0.58823,
+    "Rotation": [
+      22.5,
+      45.0,
+      22.5
+    ],
+    "Translation": [
+      0.0,
+      -13.5
+    ]
+  }
+}

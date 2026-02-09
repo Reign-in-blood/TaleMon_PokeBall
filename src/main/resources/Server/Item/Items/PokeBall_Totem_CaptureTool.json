@@ -1,0 +1,73 @@
+{
+  "Categories": [
+    "Items.Weapons",
+    "Items.Utility",
+    "Items.Debug"
+  ],
+  "Scale": 1,
+  "Quality": "Rare",
+  "ItemLevel": 40,
+  "MaxStack": 1,
+  "Model": "Items/PokeBall/Poke_Ball.blockymodel",
+  "Texture": "Items/PokeBall/Poke_Ball.png",
+  "PlayerAnimationsId": "Item",
+  "IconProperties": {
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Scale": 1,
+    "Translation": [
+      0,
+      -39.6
+    ]
+  },
+  "Icon": "Icons/ItemsGenerated/PokeBall_Capture_Crate.png",
+  "DroppedItemAnimation": "Items/Animations/Dropped/Dropped_Diagonal_Left.blockyanim",
+  "Tags": {
+    "Type": [
+      "Weapon"
+    ],
+    "Family": [
+      "Stick"
+    ]
+  },
+  "TranslationProperties": {
+    "Name": "Poke Ball",
+    "Description": ""
+  },
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "Effects": {
+            "ItemAnimationId": "Interact"
+          },
+          "RunTime": 0.05,
+          "Next": {
+            "Type": "UseCaptureCrate",
+            "AcceptedNpcGroups": [
+              "Pokemon"
+            ],
+            "FullIcon": "Icons/ItemsGenerated/PokeBall_Capture_Crate_Full.png",
+            "Failed": {
+              "Type": "Simple",
+              "Effects": {
+                "LocalSoundEventId": "SFX_PokeBall_Release"
+              }
+            },
+            "Next": {
+              "Type": "Simple"
+            },
+            "Effects": {
+              "WorldSoundEventId": "SFX_PokeBall_Capture",
+              "LocalSoundEventId": "SFX_PokeBall_Capture"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
