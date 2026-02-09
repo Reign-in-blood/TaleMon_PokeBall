@@ -2,3 +2,8 @@ items.PokeBall_Empty.name = Poke Ball
 items.PokeBall_Full.name = Poke Ball Bulbi
 items.PokeBall_Full.nameFull = PokeBall ({npc})
 items.PokeBall_Empty.description = Allows you to capture Pokemons.
+
+npcRoles.Bulbasaur.name = Bulbasaur
+npcRoles.Gastly.name = Gastly
+npcRoles.Ponyta.name = Ponyta
+npcRoles.Magikarp.name = Magikarp
