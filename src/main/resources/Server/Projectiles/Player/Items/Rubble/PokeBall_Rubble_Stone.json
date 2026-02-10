@@ -1,0 +1,30 @@
+{
+  "Appearance": "PokeBall_Projectile",
+  "SticksVertically": false,
+  "MuzzleVelocity": 30,
+  "TerminalVelocity": 20,
+  "Gravity": 20,
+  "Bounciness": 0.8,
+  "ImpactSlowdown": 0.2,
+  "TimeToLive": 8,
+  "WaterHitImpulseLoss": 0.4,
+  "WaterTerminalVelocityMultiplier": 0.35,
+  "Density": 1100,
+  "Damage": 0,
+  "DeathEffectsOnHit": true,
+  "DeadTime": 0,
+  "HitParticles": {
+    "SystemId": "MemoryUnlock",
+    "PositionOffset": {
+      "Y": 0
+    }
+  },
+  "DepthShot": 1,
+  "HorizontalCenterShot": 0.1,
+  "MissSoundEventId": "SFX_Rubble_Bounce",
+  "DeadTimeMiss": 0,
+  "DeathParticles": {
+    "SystemId": "Stone_Death"
+  },
+  "DeathSoundEventId": "SFX_PokeBall_Release"
+}

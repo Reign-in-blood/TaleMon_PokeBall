@@ -1,0 +1,83 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.PokeBall_Ponyta.name"
+  },
+  "Categories": [
+    "Items.Weapons",
+    "Items.Utility",
+    "Items.Debug"
+  ],
+  "Scale": 1.2,
+  "Quality": "Common",
+  "ItemLevel": 40,
+  "MaxStack": 1,
+  "Model": "Items/PokeBall/Poke_Ball.blockymodel",
+  "Texture": "Items/PokeBall/Poke_Ball.png",
+  "PlayerAnimationsId": "Item",
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "Interactions": [
+            {
+              "Type": "talemon:pokeball_release",
+              "Effects": {
+                "Particles": [
+                  {
+                    "SystemId": "Explosion_Small",
+                    "TargetEntityPart": "Entity",
+                    "TargetNodeName": "ball"
+                  }
+                ],
+                "WorldSoundEventId": "SFX_PokeBall_Release",
+                "ItemPlayerAnimationsId": "Item",
+                "ItemAnimationId": "Throw",
+                "WaitForAnimationToFinish": false
+              }
+            },
+            {
+              "Type": "Projectile",
+              "Config": "Projectile_Config_PokeBall_Deploy",
+              "Effects": {}
+            }
+          ],
+          "Next": {
+            "Type": "talemon:pokeball_release",
+            "Next": "PokeBall_Throw_Projectile_X",
+            "Effects": {
+              "ItemPlayerAnimationsId": "Item",
+              "ItemAnimationId": "Throw"
+            }
+          },
+          "Effects": {}
+        }
+      ],
+      "Cooldown": {
+        "Cooldown": 0
+      }
+    }
+  },
+  "IconProperties": {
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Scale": 0.305,
+    "Translation": [
+      0,
+      -39.6
+    ]
+  },
+  "Icon": "Icons/ItemsGenerated/Ponyta.png",
+  "DroppedItemAnimation": "Items/Animations/Dropped/Dropped_Diagonal_Left.blockyanim",
+  "Tags": {
+    "Type": [
+      "Weapon"
+    ],
+    "Family": [
+      "Stick"
+    ]
+  }
+}

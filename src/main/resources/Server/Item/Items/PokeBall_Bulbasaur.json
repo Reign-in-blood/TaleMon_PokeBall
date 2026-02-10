@@ -1,0 +1,54 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.PokeBall_Bulbasaur.name",
+    "Description": ""
+  },
+  "Model": "Items/PokeBall/Poke_Ball.blockymodel",
+  "Texture": "Items/PokeBall/Poke_Ball.png",
+  "Icon": "Icons/ItemsGenerated/Bulbasaur.png",
+  "PlayerAnimationsId": "Block",
+  "MaxStack": 1,
+  "ItemLevel": 18,
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "talemon:pokeball_release",
+          "Effects": {
+            "Particles": [
+              {
+                "TargetEntityPart": "Entity",
+                "SystemId": "Explosion_Small"
+              }
+            ],
+            "WorldSoundEventId": "SFX_PokeBall_Release"
+          }
+        }
+      ]
+    }
+  },
+  "IconProperties": {
+    "Scale": 0.58823,
+    "Rotation": [
+      22.5,
+      45.0,
+      22.5
+    ],
+    "Translation": [
+      0.0,
+      -13.5
+    ]
+  },
+  "MaxDurability": 1,
+  "Categories": [
+    "Items.Weapons"
+  ],
+  "Quality": "Rare",
+  "ItemEntity": {
+    "Physics": {
+      "Mass": 15
+    },
+    "PickupRadius": 2
+  },
+  "DroppedItemAnimation": "Items/Animations/Dropped/Dropped_Diagonal_Right.blockyanim"
+}

@@ -1,0 +1,30 @@
+{
+  "Appearance": "PokeBall_Projectile",
+  "SticksVertically": false,
+  "MuzzleVelocity": 15,
+  "TerminalVelocity": 15,
+  "Gravity": 15,
+  "Bounciness": 0,
+  "ImpactSlowdown": 0.3,
+  "TimeToLive": 0,
+  "WaterHitImpulseLoss": 0.4,
+  "WaterTerminalVelocityMultiplier": 0.35,
+  "Density": 1100,
+  "Damage": 0,
+  "DeathEffectsOnHit": true,
+  "DeadTime": 0,
+  "HitParticles": {
+    "SystemId": "IceBoulderTrail"
+  },
+  "DepthShot": 3,
+  "HorizontalCenterShot": 0.5,
+  "HitSoundEventId": "SFX_Rubble_Hit",
+  "MissSoundEventId": "SFX_Rubble_Bounce",
+  "DeadTimeMiss": 0,
+  "DeathParticles": {
+    "SystemId": "MemoryUnlock",
+    "Scale": 0.8
+  },
+  "DeathSoundEventId": "SFX_Stone_Break",
+  "Radius": 20
+}

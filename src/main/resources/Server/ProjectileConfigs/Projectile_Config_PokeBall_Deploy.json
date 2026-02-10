@@ -1,0 +1,38 @@
+{
+  "Model": "PokeBall_Projectile",
+  "Physics": {
+    "Type": "Standard",
+    "Gravity": 15.0,
+    "TerminalVelocityAir": 50,
+    "TerminalVelocityWater": 15,
+    "SticksVertically": false
+  },
+  "LaunchForce": 10,
+  "SpawnOffset": {
+    "X": 0.0,
+    "Y": 1,
+    "Z": 0
+  },
+  "SpawnRotationOffset": {
+    "Pitch": 0,
+    "Yaw": 0,
+    "Roll": 0
+  },
+  "Interactions": {
+    "ProjectileMiss": {
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "Effects": {
+            "Particles": [
+              {
+                "SystemId": "MemoryUnlock",
+                "TargetEntityPart": "Entity"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
