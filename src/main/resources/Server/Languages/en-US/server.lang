@@ -1,9 +1,14 @@
-items.PokeBall_Empty.name = Poke Ball
-items.PokeBall_Full.name = Poke Ball Bulbi
+items.PokeBall_Empty.name = PokeBall
+items.PokeBall_Full.name = PokeBall
 items.PokeBall_Full.nameFull = PokeBall ({npc})
-items.PokeBall_Empty.description = Allows you to capture Pokemons.
+items.PokeBall_Magikarp.name = PokeBall
+items.PokeBall_Bulbasaur.name = PokeBall
+items.PokeBall_Ponyta.name = PokeBall
+items.PokeBall_Gastly.name = PokeBall
 
 npcRoles.Bulbasaur.name = Bulbasaur
 npcRoles.Gastly.name = Gastly
 npcRoles.Ponyta.name = Ponyta
 npcRoles.Magikarp.name = Magikarp
+
+items.PokeBall_Empty.description = Allows you to capture Pokemons.

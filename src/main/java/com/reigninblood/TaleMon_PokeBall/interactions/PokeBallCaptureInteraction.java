@@ -70,7 +70,7 @@ public class PokeBallCaptureInteraction extends SimpleInstantInteraction {
         try { roleIndex = (int) role.getClass().getMethod("getRoleIndex").invoke(role); } catch (Throwable ignored) {}
         try { roleName = (String) role.getClass().getMethod("getRoleName").invoke(role); } catch (Throwable ignored) {}
 
-        // ✅ Pokemon-only filter (depuis ton fichier Server/NPC/Groups/Pokemon.json)
+        // ✅ Pokemon-only filter
         if (!PokemonList.isPokemon(roleName)) {
             HytaleLogger.getLogger().at(Level.INFO).log(
                     "[TaleMon_PokeBall] CAPTURE_BLOCKED not a Pokemon: roleName=%s roleIndex=%s",
@@ -85,16 +85,55 @@ public class PokeBallCaptureInteraction extends SimpleInstantInteraction {
                 roleName, roleIndex, targetRef
         );
 
-        // Create full ball + meta
-        ItemStack fullBall = new ItemStack("PokeBall_Full", 1);
+        // ✅ NEW: choose the full-ball item ID based on the captured pokemon
+        String pokemonBallItemId = makePokemonFullBallItemId(roleName); // ex: PokeBall_Bulbasaur
+        HytaleLogger.getLogger().at(Level.INFO).log(
+                "[TaleMon_PokeBall] CAPTURE giveItemId=%s (fallback=PokeBall_Full)",
+                pokemonBallItemId
+        );
+
+        // Create custom full ball + meta
+        ItemStack fullBall = new ItemStack(pokemonBallItemId, 1);
         ItemStack fullBallWithMeta = MetaUtil.withCapturedEntity(fullBall, roleIndex, roleName, null, null);
 
         boolean given = GiveUtil.giveToStorage(player, fullBallWithMeta);
+
+        // ✅ Fallback if the custom item doesn't exist or can't be given
+        if (!given) {
+            HytaleLogger.getLogger().at(Level.INFO).log(
+                    "[TaleMon_PokeBall] GIVE failed for %s -> fallback to PokeBall_Full",
+                    pokemonBallItemId
+            );
+
+            ItemStack fallbackBall = new ItemStack("PokeBall_Full", 1);
+            ItemStack fallbackWithMeta = MetaUtil.withCapturedEntity(fallbackBall, roleIndex, roleName, null, null);
+            given = GiveUtil.giveToStorage(player, fallbackWithMeta);
+        }
+
         HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] GIVE fullBallWithMeta ok=%s", given);
+
+        if (!given) {
+            // If we can't give the item, don't despawn the NPC (avoid losing it)
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
 
         boolean despawnOk = DespawnUtil.forceDespawn(buffer, targetRef);
         HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] DESPAWN result=%s", despawnOk);
 
         context.getState().state = InteractionState.Finished;
+    }
+
+    // Build item id: "PokeBall_<RoleName>" with safe characters
+    private static String makePokemonFullBallItemId(String roleName) {
+        if (roleName == null || roleName.isEmpty()) return "PokeBall_Full";
+
+        // Keep only letters/numbers/_ and replace others with _
+        String safe = roleName.replaceAll("[^A-Za-z0-9_]", "_");
+
+        // Optional: avoid double underscores
+        safe = safe.replaceAll("_+", "_");
+
+        return "PokeBall_" + safe;
     }
 }

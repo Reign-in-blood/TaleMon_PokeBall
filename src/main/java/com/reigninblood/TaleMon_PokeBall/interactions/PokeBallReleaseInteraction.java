@@ -26,12 +26,18 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.metadata.CapturedNPCMetadata;
 import com.reigninblood.TaleMon_PokeBall.util.ConsumeUtil;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 
 public class PokeBallReleaseInteraction extends SimpleInstantInteraction {
     public static final String ID = "talemon:pokeball_release";
     public static final BuilderCodec<PokeBallReleaseInteraction> CODEC;
+
+    // ✅ delay demandé
+    private static final long RELEASE_DELAY_MS = 1000L;
 
     public PokeBallReleaseInteraction(String id) {
         super(id);
@@ -42,71 +48,100 @@ public class PokeBallReleaseInteraction extends SimpleInstantInteraction {
     }
 
     protected void firstRun(@Nonnull InteractionType type, @Nonnull InteractionContext context, @Nonnull CooldownHandler cooldownHandler) {
-        CommandBuffer<EntityStore> buffer = context.getCommandBuffer();
+        // ✅ CAPTURE TOUT CE QUI RESTE VALIDE AVANT LE DELAY
+        final CommandBuffer<EntityStore> buffer = context.getCommandBuffer();
         if (buffer == null) {
             context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        final ItemStack held = context.getHeldItem();
+        if (held == null || held.isEmpty()) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        final Ref<EntityStore> playerRef = context.getEntity();
+        final Entity ent = EntityUtils.getEntity(playerRef, buffer);
+        if (!(ent instanceof LivingEntity)) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        final LivingEntity living = (LivingEntity)ent;
+        if (!(living instanceof Player)) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        final Player player = (Player)living;
+
+        final CapturedNPCMetadata meta = (CapturedNPCMetadata)held.getFromMetadataOrNull("CapturedEntity", CapturedNPCMetadata.CODEC);
+        if (meta == null) {
+            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL no CapturedEntity metadata");
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        final BlockPosition target = context.getTargetBlock();
+        if (target == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        Vector3d spawnPos = new Vector3d((double)target.x + 0.5D, (double)target.y + 0.5D, (double)target.z + 0.5D);
+        BlockFace face = null;
+        if (context.getClientState() != null) {
+            face = BlockFace.fromProtocolFace(context.getClientState().blockFace);
+        }
+
+        // Même logique que ton fichier actuel
+        if (face != null) {
+            Vector3d dir = new Vector3d(face.getDirection());
+            spawnPos.add(dir);
+            spawnPos.y = (double)target.y + 1.01D;
         } else {
-            ItemStack held = context.getHeldItem();
-            if (held != null && !held.isEmpty()) {
-                Ref<EntityStore> playerRef = context.getEntity();
-                Entity ent = EntityUtils.getEntity(playerRef, buffer);
-                if (ent instanceof LivingEntity) {
-                    LivingEntity living = (LivingEntity)ent;
-                    if (living instanceof Player) {
-                        Player player = (Player)living;
-                        CapturedNPCMetadata meta = (CapturedNPCMetadata)held.getFromMetadataOrNull("CapturedEntity", CapturedNPCMetadata.CODEC);
-                        if (meta == null) {
-                            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL no CapturedEntity metadata");
-                            context.getState().state = InteractionState.Failed;
-                            return;
-                        }
+            spawnPos.y = (double)target.y + 1.01D;
+        }
 
-                        BlockPosition target = context.getTargetBlock();
-                        if (target == null) {
-                            context.getState().state = InteractionState.Failed;
-                            return;
-                        }
+        spawnPos.x += 0.01D;
+        spawnPos.z += 0.01D;
 
-                        Vector3d spawnPos = new Vector3d((double)target.x + 0.5D, (double)target.y + 0.5D, (double)target.z + 0.5D);
-                        BlockFace face = null;
-                        if (context.getClientState() != null) {
-                            face = BlockFace.fromProtocolFace(context.getClientState().blockFace);
-                        }
+        final Vector3d finalSpawnPos = spawnPos;
+        final int roleIndex = meta.getRoleIndex();
+        final String nameKey = meta.getNpcNameKey();
+        final NPCPlugin npcPlugin = NPCPlugin.get();
 
-                        double EPS = 0.01D;
-                        if (face != null) {
-                            Vector3d dir = new Vector3d(face.getDirection());
-                            spawnPos.add(dir);
-                            if (face == BlockFace.UP) {
-                                spawnPos.y = (double)target.y + 1.01D;
-                            } else {
-                                spawnPos.y = (double)target.y + 1.01D;
-                            }
-                        } else {
-                            spawnPos.y = (double)target.y + 1.01D;
-                        }
+        HytaleLogger.getLogger().at(Level.INFO).log(
+                "[TaleMon_PokeBall] RELEASE_USE delay=%sms roleIndex=%s npc=%s pos=%s face=%s",
+                RELEASE_DELAY_MS, roleIndex, nameKey, finalSpawnPos, face == null ? "null" : face.name()
+        );
 
-                        spawnPos.x += 0.01D;
-                        spawnPos.z += 0.01D;
-                        int roleIndex = meta.getRoleIndex();
-                        String nameKey = meta.getNpcNameKey();
-                        HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE roleIndex=%s npc=%s pos=%s face=%s", roleIndex, nameKey, spawnPos, face == null ? "null" : face.name());
-                        NPCPlugin npcPlugin = NPCPlugin.get();
-                        buffer.run((store) -> {
-                            npcPlugin.spawnEntity(store, roleIndex, spawnPos, Vector3f.ZERO, (Model)null, (TriConsumer)null);
-                        });
-                        boolean consumed = ConsumeUtil.consumeActiveHotbarItem(player, held);
-                        HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE consume ok=%s", consumed);
-                        context.getState().state = InteractionState.Finished;
-                        return;
-                    }
+        // ✅ IMPORTANT :
+        // On ne touche PLUS au context après 1 seconde.
+        // On exécute spawn + consume via buffer.run (serveur thread) APRES le délai.
+        CompletableFuture.runAsync(() -> {
+            buffer.run((store) -> {
+                try {
+                    npcPlugin.spawnEntity(store, roleIndex, finalSpawnPos, Vector3f.ZERO, (Model)null, (TriConsumer)null);
+                } catch (Throwable t) {
+                    HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawn exception=%s", String.valueOf(t));
+                    return;
                 }
 
-                context.getState().state = InteractionState.Failed;
-            } else {
-                context.getState().state = InteractionState.Failed;
-            }
-        }
+                boolean consumed = false;
+                try {
+                    consumed = ConsumeUtil.consumeActiveHotbarItem(player, held);
+                } catch (Throwable t) {
+                    HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL consume exception=%s", String.valueOf(t));
+                }
+
+                HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_OK spawned=true consume ok=%s", consumed);
+            });
+        }, CompletableFuture.delayedExecutor(RELEASE_DELAY_MS, TimeUnit.MILLISECONDS));
+
+        // Interaction finie tout de suite (on laisse le serveur faire le reste)
+        context.getState().state = InteractionState.Finished;
     }
 
     static {
