@@ -1,0 +1,221 @@
+{
+  "StartState": "Idle",
+  "DefaultSubState": "Default",
+  "Type": "Generic",
+  "Appearance": "Kweebec_Seedling_Floating_Blue",
+  "Invulnerable": true,
+  "MotionControllerList": [
+    {
+      "Type": "Walk",
+      "MaxWalkSpeed": 15,
+      "Gravity": 10,
+      "MaxFallSpeed": 8,
+      "Acceleration": 10,
+      "MinHover": 1,
+      "MinHoverDrop": 0.1,
+      "MinHoverClimb": 0.1,
+      "MaxHover": 1.4,
+      "HoverFreq": 0.2,
+      "MaxClimbHeight": 10
+    }
+  ],
+  "MaxHealth": 50,
+  "Instructions": [
+    {
+      "Instructions": [
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Petting"
+          },
+          "Instructions": [
+            {
+              "Actions": [
+                {
+                  "Type": "PlayAnimation",
+                  "Slot": "Action",
+                  "Animation": "Cheer",
+                  "Once": true
+                },
+                {
+                  "Type": "Timeout",
+                  "Delay": [
+                    1,
+                    1
+                  ]
+                },
+                {
+                  "Type": "PlayAnimation",
+                  "Slot": "Status"
+                },
+                {
+                  "Type": "PlaySound",
+                  "SoundEventId": "SFX_Hello_FloatingPet",
+                  "Once": true
+                },
+                {
+                  "Type": "Timeout",
+                  "Delay": [
+                    2,
+                    3
+                  ],
+                  "Action": {
+                    "Type": "State",
+                    "State": "Idle"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Idle"
+          },
+          "Instructions": [
+            {
+              "Sensor": {
+                "Type": "State",
+                "State": ".Default"
+              },
+              "Instructions": [
+                {
+                  "Sensor": {
+                    "Type": "Player",
+                    "Range": 10,
+                    "LockOnTarget": true
+                  },
+                  "Instructions": [
+                    {
+                      "$Comment": "Strafe when grouped up",
+                      "Sensor": {
+                        "Type": "Mob",
+                        "Range": 2,
+                        "ExcludeOwnType": false,
+                        "LockOnTarget": false,
+                        "Filters": [
+                          {
+                            "Type": "NPCGroup",
+                            "IncludeGroups": [
+                              "Self"
+                            ]
+                          },
+                          {
+                            "Type": "ViewSector",
+                            "ViewSector": 35
+                          }
+                        ]
+                      },
+                      "BodyMotion": {
+                        "Type": "MaintainDistance",
+                        "DesiredDistanceRange": [
+                          2,
+                          3
+                        ],
+                        "StrafingDurationRange": [
+                          1,
+                          2
+                        ],
+                        "StrafingFrequencyRange": [
+                          1,
+                          1
+                        ],
+                        "MoveThreshold": 0.5,
+                        "RelativeForwardsSpeed": 0.75,
+                        "RelativeBackwardsSpeed": 0.25
+                      }
+                    },
+                    {
+                      "Sensor": {
+                        "Type": "Target"
+                      },
+                      "BodyMotion": {
+                        "Type": "Seek",
+                        "SlowDownDistance": 6,
+                        "StopDistance": 1.4,
+                        "RelativeSpeed": 1.5
+                      }
+                    }
+                  ]
+                },
+                {
+                  "Sensor": {
+                    "Type": "Target",
+                    "Range": 20
+                  },
+                  "BodyMotion": {
+                    "Type": "Seek",
+                    "SlowDownDistance": 6,
+                    "StopDistance": 1.4,
+                    "RelativeSpeed": 1.8
+                  }
+                },
+                {
+                  "Sensor": {
+                    "Type": "Target"
+                  },
+                  "BodyMotion": {
+                    "Type": "Teleport",
+                    "OffsetRange": [
+                      2,
+                      2
+                    ],
+                    "MaxYOffset": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "InteractionInstruction": {
+    "Instructions": [
+      {
+        "Continue": true,
+        "Sensor": {
+          "Type": "Any"
+        },
+        "Actions": [
+          {
+            "Type": "SetInteractable",
+            "Once": true,
+            "Interactable": true
+          }
+        ]
+      },
+      {
+        "Sensor": {
+          "Type": "HasInteracted"
+        },
+        "Instructions": [
+          {
+            "Actions": [
+              {
+                "Type": "LockOnInteractionTarget"
+              },
+              {
+                "Type": "State",
+                "State": "Petting"
+              },
+              {
+                "Type": "Timeout",
+                "Delay": [
+                  2,
+                  3
+                ],
+                "Action": {
+                  "Type": "State",
+                  "State": "Idle"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "NameTranslationKey": "server.npcRoles.Test_Pet_Lantern.name"
+}

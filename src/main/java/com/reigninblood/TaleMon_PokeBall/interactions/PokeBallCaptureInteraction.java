@@ -12,6 +12,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInstantInteraction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
 import com.reigninblood.TaleMon_PokeBall.util.DespawnUtil;
@@ -64,41 +65,53 @@ public class PokeBallCaptureInteraction extends SimpleInstantInteraction {
 
         // Role info
         Object role = npc.getRole();
-        int roleIndex = -1;
-        String roleName = "Unknown";
+        int rawRoleIndex = -1;
+        String rawRoleName = "Unknown";
 
-        try { roleIndex = (int) role.getClass().getMethod("getRoleIndex").invoke(role); } catch (Throwable ignored) {}
-        try { roleName = (String) role.getClass().getMethod("getRoleName").invoke(role); } catch (Throwable ignored) {}
+        try { rawRoleIndex = (int) role.getClass().getMethod("getRoleIndex").invoke(role); } catch (Throwable ignored) {}
+        try { rawRoleName = (String) role.getClass().getMethod("getRoleName").invoke(role); } catch (Throwable ignored) {}
 
-        // ✅ Pokemon-only filter
-        if (!PokemonList.isPokemon(roleName)) {
+        // ✅ Normalize role name (handle companion/summoned variants + path names)
+        String baseRoleName = normalizePokemonRoleName(rawRoleName);
+
+        // ✅ Pokemon-only filter should use BASE name
+        if (!PokemonList.isPokemon(baseRoleName)) {
             HytaleLogger.getLogger().at(Level.INFO).log(
-                    "[TaleMon_PokeBall] CAPTURE_BLOCKED not a Pokemon: roleName=%s roleIndex=%s",
-                    roleName, roleIndex
+                    "[TaleMon_PokeBall] CAPTURE_BLOCKED not a Pokemon: rawRoleName=%s baseRoleName=%s roleIndex=%s",
+                    rawRoleName, baseRoleName, rawRoleIndex
             );
             context.getState().state = InteractionState.Failed;
             return;
         }
 
+        // ✅ Prefer storing the BASE roleIndex (wild) if it exists in registry
+        int storeRoleIndex = rawRoleIndex;
+        try {
+            NPCPlugin npcPlugin = NPCPlugin.get();
+            if (npcPlugin != null && npcPlugin.hasRoleName(baseRoleName)) {
+                storeRoleIndex = npcPlugin.getIndex(baseRoleName);
+            }
+        } catch (Throwable ignored) {}
+
         HytaleLogger.getLogger().at(Level.INFO).log(
-                "[TaleMon_PokeBall] CAPTURE_OK roleName=%s roleIndex=%s target=%s",
-                roleName, roleIndex, targetRef
+                "[TaleMon_PokeBall] CAPTURE_OK rawRoleName=%s baseRoleName=%s rawRoleIndex=%s storeRoleIndex=%s target=%s",
+                rawRoleName, baseRoleName, rawRoleIndex, storeRoleIndex, targetRef
         );
 
-        // ✅ NEW: choose the full-ball item ID based on the captured pokemon
-        String pokemonBallItemId = makePokemonFullBallItemId(roleName); // ex: PokeBall_Bulbasaur
+        // Choose the full-ball item ID based on BASE pokemon name
+        String pokemonBallItemId = makePokemonFullBallItemId(baseRoleName); // ex: PokeBall_Bulbasaur
         HytaleLogger.getLogger().at(Level.INFO).log(
                 "[TaleMon_PokeBall] CAPTURE giveItemId=%s (fallback=PokeBall_Full)",
                 pokemonBallItemId
         );
 
-        // Create custom full ball + meta
+        // Create custom full ball + meta (store BASE name + BASE index)
         ItemStack fullBall = new ItemStack(pokemonBallItemId, 1);
-        ItemStack fullBallWithMeta = MetaUtil.withCapturedEntity(fullBall, roleIndex, roleName, null, null);
+        ItemStack fullBallWithMeta = MetaUtil.withCapturedEntity(fullBall, storeRoleIndex, baseRoleName, null, null);
 
         boolean given = GiveUtil.giveToStorage(player, fullBallWithMeta);
 
-        // ✅ Fallback if the custom item doesn't exist or can't be given
+        // Fallback if the custom item doesn't exist or can't be given
         if (!given) {
             HytaleLogger.getLogger().at(Level.INFO).log(
                     "[TaleMon_PokeBall] GIVE failed for %s -> fallback to PokeBall_Full",
@@ -106,7 +119,7 @@ public class PokeBallCaptureInteraction extends SimpleInstantInteraction {
             );
 
             ItemStack fallbackBall = new ItemStack("PokeBall_Full", 1);
-            ItemStack fallbackWithMeta = MetaUtil.withCapturedEntity(fallbackBall, roleIndex, roleName, null, null);
+            ItemStack fallbackWithMeta = MetaUtil.withCapturedEntity(fallbackBall, storeRoleIndex, baseRoleName, null, null);
             given = GiveUtil.giveToStorage(player, fallbackWithMeta);
         }
 
@@ -122,6 +135,23 @@ public class PokeBallCaptureInteraction extends SimpleInstantInteraction {
         HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] DESPAWN result=%s", despawnOk);
 
         context.getState().state = InteractionState.Finished;
+    }
+
+    private static String normalizePokemonRoleName(String roleName) {
+        if (roleName == null || roleName.isEmpty()) return "Unknown";
+
+        // If it's a path, keep last segment
+        String base = roleName;
+        int slash = base.lastIndexOf('/');
+        if (slash >= 0 && slash + 1 < base.length()) {
+            base = base.substring(slash + 1);
+        }
+
+        // Strip known suffixes
+        if (base.endsWith("_Companion")) base = base.substring(0, base.length() - "_Companion".length());
+        if (base.endsWith("_Summoned")) base = base.substring(0, base.length() - "_Summoned".length());
+
+        return base;
     }
 
     // Build item id: "PokeBall_<RoleName>" with safe characters

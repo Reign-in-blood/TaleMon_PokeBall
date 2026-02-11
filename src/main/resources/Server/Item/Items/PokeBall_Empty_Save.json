@@ -53,7 +53,7 @@
           "Type": "Simple",
           "Effects": {},
           "RunTime": 0.05,
-          "Next": "PokeBall_Throw_Projectile_XX"
+          "Next": "PokeBall_Throw_Projectile_X"
         }
       ]
     }

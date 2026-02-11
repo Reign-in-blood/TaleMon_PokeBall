@@ -28,8 +28,6 @@ import com.hypixel.hytale.server.npc.metadata.CapturedNPCMetadata;
 import com.reigninblood.TaleMon_PokeBall.util.ConsumeUtil;
 import com.reigninblood.TaleMon_PokeBall.util.SpawnPosUtil;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 
@@ -37,24 +35,10 @@ public class PokeBallReleaseInteraction extends SimpleInstantInteraction {
     public static final String ID = "talemon:pokeball_release";
     public static final BuilderCodec<PokeBallReleaseInteraction> CODEC;
 
-    // Delay demandé (ms)
-    private static final long RELEASE_DELAY_MS = 1000L;
+    private static final boolean SPAWN_COMPANION_ROLE = true;
 
-    /**
-     * true  = comportement actuel (async + delay)
-     * false = mode test (pas d'async, pas de delay)
-     *
-     * IMPORTANT: teste d'abord false pour savoir si l'async est la cause.
-     */
-    private static final boolean USE_ASYNC_DELAY_RELEASE = false;
-
-    public PokeBallReleaseInteraction(String id) {
-        super(id);
-    }
-
-    protected PokeBallReleaseInteraction() {
-        super("talemon:pokeball_release");
-    }
+    public PokeBallReleaseInteraction(String id) { super(id); }
+    protected PokeBallReleaseInteraction() { super(ID); }
 
     @Override
     protected void firstRun(@Nonnull InteractionType type, @Nonnull InteractionContext context, @Nonnull CooldownHandler cooldownHandler) {
@@ -99,38 +83,50 @@ public class PokeBallReleaseInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        // Base spawn position = centre du bloc visé
         Vector3d spawnPos = new Vector3d((double) target.x + 0.5D, (double) target.y + 0.5D, (double) target.z + 0.5D);
 
-        // Face cliquée (optionnel)
         BlockFace face = null;
         if (context.getClientState() != null) {
             face = BlockFace.fromProtocolFace(context.getClientState().blockFace);
         }
 
-        // Si on clique une face, on pousse d'un bloc dans cette direction
         if (face != null) {
             Vector3d dir = new Vector3d(face.getDirection());
             spawnPos.add(dir);
         }
 
-        // Spawn safe (évite l'entité dans le sol)
         final Vector3d finalSpawnPos = SpawnPosUtil.makeSafe(spawnPos);
 
-        final int roleIndex = meta.getRoleIndex();
-        final String nameKey = meta.getNpcNameKey();
+        final int wildRoleIndex = meta.getRoleIndex();
+        final String npcNameKey = meta.getNpcNameKey();
         final NPCPlugin npcPlugin = NPCPlugin.get();
+        final String faceStr = (face == null) ? "null" : face.name();
 
-        HytaleLogger.getLogger().at(Level.INFO).log(
-                "[TaleMon_PokeBall] RELEASE_USE delay=%sms roleIndex=%s npc=%s pos=%s face=%s",
-                RELEASE_DELAY_MS, roleIndex, nameKey, finalSpawnPos, face == null ? "null" : face.name()
-        );
+        final String wildRoleName = safeGetRoleName(npcPlugin, wildRoleIndex);
 
-        // Code serveur (spawn + consume)
-        Runnable doRelease = () -> buffer.run((store) -> {
-            boolean spawned = spawnNpcSafe(store, npcPlugin, roleIndex, nameKey, finalSpawnPos);
+        buffer.run((Store<EntityStore> store) -> {
+            int spawnRoleIndex = wildRoleIndex;
+            int companionIndex = -1;
+
+            if (SPAWN_COMPANION_ROLE) {
+                companionIndex = resolveCompanionRoleIndex(npcPlugin, wildRoleName, npcNameKey);
+                if (companionIndex >= 0) spawnRoleIndex = companionIndex;
+            }
+
+            HytaleLogger.getLogger().at(Level.INFO).log(
+                    "[TaleMon_PokeBall] RELEASE_USE wildRoleIndex=%s wildRoleName=%s companionIndex=%s spawnRoleIndex=%s npc=%s pos=%s face=%s",
+                    wildRoleIndex,
+                    wildRoleName == null ? "null" : wildRoleName,
+                    companionIndex < 0 ? "none" : String.valueOf(companionIndex),
+                    spawnRoleIndex,
+                    npcNameKey,
+                    finalSpawnPos,
+                    faceStr
+            );
+
+            boolean spawned = spawnNpcSafe(store, npcPlugin, spawnRoleIndex, finalSpawnPos);
             if (!spawned) {
-                HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawnNpcSafe returned false");
+                HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawn failed");
                 return;
             }
 
@@ -144,79 +140,91 @@ public class PokeBallReleaseInteraction extends SimpleInstantInteraction {
             HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_OK spawned=true consume ok=%s", consumed);
         });
 
-        if (USE_ASYNC_DELAY_RELEASE) {
-            CompletableFuture.runAsync(doRelease, CompletableFuture.delayedExecutor(RELEASE_DELAY_MS, TimeUnit.MILLISECONDS));
-        } else {
-            doRelease.run();
-        }
-
         context.getState().state = InteractionState.Finished;
     }
 
-    /**
-     * Tente plusieurs signatures de spawn (selon versions/API), puis fallback sur la signature simple.
-     * Objectif: éviter un NPC "incomplet" (motionKind null / spawnConfig invalid).
-     */
-    private static boolean spawnNpcSafe(
-            Store<EntityStore> store,
-            NPCPlugin npcPlugin,
-            int roleIndex,
-            String nameKey,
-            Vector3d pos
-    ) {
-        // 1) Essai: spawnEntity(store, roleIndex, nameKey, pos, vel, model, triConsumer)
+    private static String safeGetRoleName(NPCPlugin npcPlugin, int roleIndex) {
         try {
-            java.lang.reflect.Method m = npcPlugin.getClass().getMethod(
-                    "spawnEntity",
-                    Store.class,
-                    int.class,
-                    String.class,
-                    Vector3d.class,
-                    Vector3f.class,
-                    Model.class,
-                    TriConsumer.class
-            );
-
-            m.invoke(npcPlugin, store, roleIndex, nameKey, pos, Vector3f.ZERO, null, null);
-            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_SPAWN used signature: (Store,int,String,Vector3d,Vector3f,Model,TriConsumer)");
-            return true;
-        } catch (NoSuchMethodException ignored) {
-            // signature non disponible
-        } catch (Throwable t) {
-            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawn(sig:role+name) ex=%s", String.valueOf(t));
+            return npcPlugin.getName(roleIndex);
+        } catch (Throwable ignored) {
+            return null;
         }
+    }
 
-        // 2) Essai: spawnEntity(store, roleIndex, pos, vel, model, triConsumer, spawnConfigIndex)
-        try {
-            java.lang.reflect.Method m = npcPlugin.getClass().getMethod(
-                    "spawnEntity",
-                    Store.class,
-                    int.class,
-                    Vector3d.class,
-                    Vector3f.class,
-                    Model.class,
-                    TriConsumer.class,
-                    int.class
-            );
-
-            m.invoke(npcPlugin, store, roleIndex, pos, Vector3f.ZERO, null, null, 0);
-            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_SPAWN used signature: (Store,int,Vector3d,Vector3f,Model,TriConsumer,int)");
-            return true;
-        } catch (NoSuchMethodException ignored) {
-            // signature non disponible
-        } catch (Throwable t) {
-            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawn(sig:+spawnCfg) ex=%s", String.valueOf(t));
-        }
-
-        // 3) Fallback: signature simple
+    private static boolean spawnNpcSafe(Store<EntityStore> store, NPCPlugin npcPlugin, int roleIndex, Vector3d pos) {
         try {
             npcPlugin.spawnEntity(store, roleIndex, pos, Vector3f.ZERO, (Model) null, (TriConsumer) null);
-            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_SPAWN used fallback signature: (Store,int,Vector3d,Vector3f,Model,TriConsumer)");
             return true;
         } catch (Throwable t) {
-            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawn(fallback) ex=%s", String.valueOf(t));
+            HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawn exception=%s", String.valueOf(t));
             return false;
         }
+    }
+
+    /**
+     * ✅ Resolver robuste: on ne dépend plus de hasRoleName().
+     * On essaie getIndex() sur plusieurs formes (nom simple, nom+suffix, chemin, chemin+.json).
+     */
+    private static int resolveCompanionRoleIndex(NPCPlugin npcPlugin, String wildRoleName, String npcNameKey) {
+        String baseA = toBaseName(wildRoleName);
+        String baseB = toBaseName(npcNameKey);
+
+        String[] bases = new String[] { wildRoleName, baseA, baseB };
+        String[] suffixes = new String[] { "_Companion", "_Summoned" };
+
+        String[] prefixes = new String[] {
+                "",
+                "Pokemon/",
+                "Server/NPC/Roles/Pokemon/",
+                "Server/NPC/Roles/"
+        };
+
+        for (String b : bases) {
+            if (b == null || b.isEmpty()) continue;
+
+            String last = toBaseName(b);
+
+            for (String suf : suffixes) {
+                // (1) forme simple
+                Integer idx = tryGetIndex(npcPlugin, last + suf);
+                if (idx != null) return idx;
+
+                // (2) avec prefixes communs
+                for (String p : prefixes) {
+                    idx = tryGetIndex(npcPlugin, p + last + suf);
+                    if (idx != null) return idx;
+
+                    // (3) parfois il faut l'extension .json
+                    idx = tryGetIndex(npcPlugin, p + last + suf + ".json");
+                    if (idx != null) return idx;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private static Integer tryGetIndex(NPCPlugin npcPlugin, String roleName) {
+        if (roleName == null || roleName.isEmpty()) return null;
+        try {
+            return npcPlugin.getIndex(roleName);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static String toBaseName(String nameOrPath) {
+        if (nameOrPath == null) return null;
+        String s = nameOrPath;
+
+        int slash = s.lastIndexOf('/');
+        if (slash >= 0 && slash + 1 < s.length()) s = s.substring(slash + 1);
+
+        if (s.endsWith(".json")) s = s.substring(0, s.length() - 5);
+        if (s.endsWith("_Companion")) s = s.substring(0, s.length() - "_Companion".length());
+        if (s.endsWith("_Summoned")) s = s.substring(0, s.length() - "_Summoned".length());
+
+        return s;
     }
 
     static {

@@ -1,6 +1,6 @@
 {
   "Type": "LaunchProjectile",
   "RunTime": 0.1,
-  "ProjectileId": "PokeBall_Rubble_Stone",
+  "ProjectileId": "PokeBall_Rubble_Stone_Empty",
   "Next": "PokeBall_ModifyInventory"
 }

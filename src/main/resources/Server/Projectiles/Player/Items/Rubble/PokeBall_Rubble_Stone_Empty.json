@@ -4,9 +4,9 @@
   "MuzzleVelocity": 30,
   "TerminalVelocity": 20,
   "Gravity": 20,
-  "Bounciness": 0.8,
-  "ImpactSlowdown": 0.2,
-  "TimeToLive": 8,
+  "Bounciness": 0.1,
+  "ImpactSlowdown": 0.5,
+  "TimeToLive": 2,
   "WaterHitImpulseLoss": 0.4,
   "WaterTerminalVelocityMultiplier": 0.35,
   "Density": 1100,
@@ -20,12 +20,12 @@
     },
     "Scale": 0.5
   },
-  "DepthShot": 1,
+  "DepthShot": 0,
   "HorizontalCenterShot": 0.1,
   "MissSoundEventId": "SFX_Rubble_Bounce",
   "DeadTimeMiss": 0,
+  "DeathSoundEventId": "SFX_PokeBall_Release",
   "DeathParticles": {
     "SystemId": "Stone_Death"
-  },
-  "DeathSoundEventId": "SFX_PokeBall_Release"
+  }
 }
