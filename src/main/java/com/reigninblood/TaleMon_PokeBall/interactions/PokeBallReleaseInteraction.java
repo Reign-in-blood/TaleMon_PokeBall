@@ -3,7 +3,6 @@ package com.reigninblood.TaleMon_PokeBall.interactions;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.function.consumer.TriConsumer;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
@@ -117,7 +116,7 @@ public class PokeBallReleaseInteraction extends SimpleInstantInteraction {
 
         CompletableFuture.runAsync(() -> buffer.run(store -> {
             try {
-                npcPlugin.spawnEntity(store, roleIndex, finalSpawnPos, Vector3f.ZERO, (Model) null, (TriConsumer) null);
+                npcPlugin.spawnEntity(store, roleIndex, finalSpawnPos, Vector3f.ZERO, (Model) null, null);
             } catch (Throwable t) {
                 HytaleLogger.getLogger().at(Level.INFO).log("[TaleMon_PokeBall] RELEASE_FAIL spawn exception=%s", String.valueOf(t));
                 return;
