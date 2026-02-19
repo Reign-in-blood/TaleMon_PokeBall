@@ -24,6 +24,15 @@ public final class MetaReadUtil {
         BsonValue nk = d.get("NpcNameKey");
         if (nk != null && nk.isString()) npcNameKey = nk.asString().getValue();
 
+        if (npcNameKey == null) {
+            BsonValue rn = d.get("RoleName");
+            if (rn != null && rn.isString()) npcNameKey = rn.asString().getValue();
+        }
+        if (npcNameKey == null) {
+            BsonValue rid = d.get("RoleIdentifier");
+            if (rid != null && rid.isString()) npcNameKey = rid.asString().getValue();
+        }
+
         if (roleIndex == null && npcNameKey == null) return null;
         return new Captured(roleIndex, npcNameKey);
     }

@@ -80,13 +80,21 @@ tasks.named('processResources') {
 
 def createServerRunArguments(String srcDir) {
     def programParameters = '--allow-op --disable-sentry --assets="' + "${hytaleHome}/install/$patchline/package/game/latest/Assets.zip" + '"'
-    def modPaths = []
-    if (includes_pack.toBoolean()) {
-        modPaths << srcDir
+
+    // Update 3 note:
+    // Passing src/main in --mods while also loading this plugin from classpath can register
+    // the same asset pack twice (same manifest name), which aborts boot.
+    // Keep old behavior opt-in via -Pload_source_pack_as_mod=true.
+    def loadSourcePackAsMod = project.hasProperty('load_source_pack_as_mod') && project.findProperty('load_source_pack_as_mod').toString().toBoolean()
+
+    def modPaths = [] as LinkedHashSet
+    if (includes_pack.toBoolean() && loadSourcePackAsMod) {
+        modPaths << file(srcDir).canonicalPath
     }
     if (load_user_mods.toBoolean()) {
-        modPaths << "${hytaleHome}/UserData/Mods"
+        modPaths << file("${hytaleHome}/UserData/Mods").canonicalPath
     }
+
     if (!modPaths.isEmpty()) {
         programParameters += ' --mods="' + modPaths.join(',') + '"'
     }

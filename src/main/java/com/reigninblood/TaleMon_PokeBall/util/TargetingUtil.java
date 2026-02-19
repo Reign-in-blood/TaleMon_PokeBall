@@ -10,6 +10,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.TransformComponen
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public final class TargetingUtil {
@@ -62,13 +63,42 @@ public final class TargetingUtil {
 
                 double score = dot / dist;
                 if (score > best.score) {
-                    best.score = score;
-                    best.uuid = npc.getUuid(); // warning deprecated OK
+                    UUID uuid = resolveUuid(npc);
+                    if (uuid != null) {
+                        best.score = score;
+                        best.uuid = uuid;
+                    }
                 }
             }
         });
 
         return best.uuid;
+    }
+
+    private static UUID resolveUuid(NPCEntity npc) {
+        Object value = call(npc, "getUniqueId");
+        if (value == null) value = call(npc, "getEntityUuid");
+        if (value == null) value = call(npc, "getId");
+        if (value == null) value = call(npc, "getUuid"); // legacy fallback
+
+        if (value instanceof UUID uuid) return uuid;
+        if (value instanceof String s) {
+            try {
+                return UUID.fromString(s);
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static Object call(Object target, String method) {
+        try {
+            Method m = target.getClass().getMethod(method);
+            return m.invoke(target);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private static class BestCandidate {

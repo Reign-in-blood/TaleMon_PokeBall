@@ -28,7 +28,12 @@ public final class MetaUtil {
             // Sous-document CapturedEntity
             BsonDocument captured = new BsonDocument();
             captured.put("RoleIndex", new BsonInt32(roleIndex));
-            if (npcNameKey != null) captured.put("NpcNameKey", new BsonString(npcNameKey));
+            if (npcNameKey != null) {
+                captured.put("NpcNameKey", new BsonString(npcNameKey));
+                // Update 3 compatibility: keep explicit role/name aliases for future reads.
+                captured.put("RoleName", new BsonString(npcNameKey));
+                captured.put("RoleIdentifier", new BsonString(npcNameKey));
+            }
             if (iconPath != null) captured.put("IconPath", new BsonString(iconPath));
             if (fullItemIcon != null) captured.put("FullItemIcon", new BsonString(fullItemIcon));
 
